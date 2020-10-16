@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>Multi Line Chart</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <style></style>
+</head>
+<body>
+    <div id="container" class="svg-container"></div>
+    <script>
+    //------------------------1. PREPARATION------------------------//
+    //-----------------------------SVG------------------------------// 
+    const width = 960;
+    const height = 300;
+    const margin = 20;
+    const padding = 30;
+    const adj = 40;
+    // we are appending SVG first
+    const svg = d3.select("div#container").append("svg")
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "-"
+            + adj + " -"
+            + adj + " "
+            + (width + adj * 5) + " "
+            + (height + adj * 3))
+        .style("padding", padding)
+        .style("margin", margin)
+        .classed("svg-content", true);
+    
+    const svg2 = d3.select("div#container").append("svg")
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "-"
+            + adj + " -"
+            + adj + " "
+            + (width + adj * 5) + " "
+            + (height + adj * 3))
+        .style("padding", padding)
+        .style("margin", margin)
+        .classed("svg-content", true);
+
+    const svg3 = d3.select("div#container").append("svg")
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "-"
+            + adj + " -"
+            + adj + " "
+            + (width + adj * 5) + " "
+            + (height + adj * 3))
+        .style("padding", padding)
+        .style("margin", margin)
+        .classed("svg-content", true);
+
+    const svg4 = d3.select("div#container").append("svg")
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "-"
+            + adj + " -"
+            + adj + " "
+            + (width + adj * 5) + " "
+            + (height + adj * 3))
+        .style("padding", padding)
+        .style("margin", margin)
+        .classed("svg-content", true);
+
+    //-----------------------------DATA-----------------------------//
+    const timeConv = d3.timeParse("%Y-%m-%d");
+    const dataset = d3.csv("boardgame_ratings.csv");
+    dataset.then(function(data) {
+        var slices = data.columns.slice(1).map(function(id) {
+            return {
+                id: id,
+                values: data.map(function(d){
+                    return {
+                        date: timeConv(d.date),
+                        measurement: +d[id]
+                    };
+                })
+            };
+        });
+
+        // create variable called counts to only store count data
+        var counts = [];
+
+        // iterate through slices variable and only add even numbers
+        for (i=0; i<16; i+=2) {
+            counts.push(slices[i]);
+        };
+
+        // add color scheme to objects in counts
+        for (i=0; i<8; i++) {
+            counts[i].color = d3.schemeCategory10[i]
+        }
+
+        console.log(counts)
+
+        // create empty list for rankings
+        var rankings = [];
+
+        // iterate through slices to pull only rank columns
+        for (i=1; i<16; i+=2) {
+            rankings.push(slices[i])
+        }
+
+        // create new list for rankings with only every 3rd month selected
+        var rankings_new = [];
+
+        // iterate through rankings to set up structure for rankings_new
+        for (i = 0; i < rankings.length; i++) {
+            rankings_new.push({
+                id:rankings[i].id,
+                values:[]});
+
+        };
+
+        // iterate through rankings and only push every 3rd data point
+        for (i = 0; i < rankings.length; i++) {
+            for (j=2; j < rankings[i].values.length; j+=3) {
+                rankings_new[i].values.push(rankings[i].values[j])
+            }
+        }
+
+        var counts_new = [];
+
+        // iterate through counts to set up structure for counts_new
+        for (i = 0; i < counts.length; i++) {
+            counts_new.push({
+                id:counts[i].id,
+                values:[]});
+
+        };
+
+        // iterate through rankings and only push every 3rd data point
+        for (i = 0; i < counts.length; i++) {
+            for (j=2; j < counts[i].values.length; j+=3) {
+                counts_new[i].values.push(counts[i].values[j])
+            }
+        }
+        
+        // create subset for catan and ranking data
+        var catan_rank = rankings_new[0].values
+        var codenames_rank = rankings_new[2].values
+        var terramars_rank = rankings_new[3].values
+        var gloom_rank = rankings_new[4].values
+
+        // add count data to catan rank variable
+        for (i=0; i<15; i++) {
+            catan_rank[i].count = counts_new[0].values[i].measurement
+        }
+
+        for (i=0; i<15; i++) {
+            codenames_rank[i].count = counts_new[2].values[i].measurement
+        }
+
+        for (i=0; i<15; i++) {
+            terramars_rank[i].count = counts_new[3].values[i].measurement
+        }
+
+        for (i=0; i<15; i++) {
+            gloom_rank[i].count = counts_new[4].values[i].measurement
+        }
+
+        //----------------------------SCALES----------------------------//
+        const xScale = d3.scaleTime().range([0+padding,width]);
+        const yScale = d3.scaleLinear().rangeRound([height, 0]);
+        const yScale_sqrt = d3.scaleSqrt().rangeRound([height,0]);
+        const yScale_log = d3.scaleLog().rangeRound([height,0]);
+
+
+        xScale.domain(d3.extent(data, function(d){
+            return timeConv(d.date)}));
+
+        yScale.domain([(0), d3.max(slices, function(c) {
+            return d3.max(c.values, function(d) {
+                return d.measurement + 4; });
+                })
+            ]);
+
+        yScale_sqrt.domain([(0), d3.max(slices, function(c) {
+            return d3.max(c.values, function(d) {
+                return d.measurement + 4; });
+                })
+            ]);
+        
+        yScale_log.domain([(0.000001), d3.max(slices, function(c) {
+            return d3.max(c.values, function(d) {
+                return d.measurement + 4; });
+                })
+            ]);
+
+        //-----------------------------AXES-----------------------------//
+
+        const yaxis = d3.axisLeft()
+            .ticks(10)
+            .scale(yScale);
+
+        const yaxis_sqrt = d3.axisLeft()
+            .ticks(10)
+            .scale(yScale_sqrt);
+        
+        const yaxis_log = d3.axisLeft()
+            .ticks(10)
+            .scale(yScale_log);
+
+
+        const xaxis = d3.axisBottom()
+            .ticks(d3.timeDay.filter(d=>d3.timeDay.count(0, d) % 90 === 0))
+            .tickFormat(d3.timeFormat('%b %y'))
+            .scale(xScale);
+
+
+        //----------------------------LINES-----------------------------//
+        const line = d3.line()
+            .x(function(d) { return xScale(d.date); })
+            .y(function(d) { return yScale(d.measurement); }); 
+
+        let id = 0;
+        const ids = function () {
+            return "line-"+id++;
+        }  
+
+        const line_sqrt = d3.line()
+            .x(function(d) { return xScale(d.date); })
+            .y(function(d) { return yScale_sqrt(d.measurement); });
+
+        const line_log = d3.line()
+            .x(function(d) { return xScale(d.date); })
+            .y(function(d) { return yScale_log(d.measurement); });
+
+        //-------------------------2. DRAWING---------------------------//
+        //-----------------------------AXES-----------------------------//
+        svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xaxis)
+            .append('text')
+            .attr('x', width/2)
+            .attr('y', padding+margin/2)
+            .style('text-anchor', 'middle')
+            .text('Month');
+
+        svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding + ",0)")
+            .call(yaxis)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -(padding+margin)*1.2)
+            .attr("x", -height/2)
+            .style("text-anchor", "middle")
+            .text("Num of Ratings");
+        
+        svg2.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xaxis)
+            .append('text')
+            .attr('x', width/2)
+            .attr('y', padding+margin/2)
+            .style('text-anchor', 'middle')
+            .text('Month');
+
+        svg2.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding + ",0)")
+            .call(yaxis)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -(padding+margin)*1.2)
+            .attr("x", -height/2)
+            .style("text-anchor", "middle")
+            .text("Num of Ratings");
+
+        svg3.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xaxis)
+            .append('text')
+            .attr('x', width/2)
+            .attr('y', padding+margin/2)
+            .style('text-anchor', 'middle')
+            .text('Month');
+
+        svg3.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding + ",0)")
+            .call(yaxis_sqrt)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -(padding+margin)*1.2)
+            .attr("x", -height/2)
+            .style("text-anchor", "middle")
+            .text("Num of Ratings");
+
+        svg4.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xaxis)
+            .append('text')
+            .attr('x', width/2)
+            .attr('y', padding+margin/2)
+            .style('text-anchor', 'middle')
+            .text('Month');
+
+        svg4.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding + ",0)")
+            .call(yaxis_log)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -(padding+margin)*1.2)
+            .attr("x", -height/2)
+            .style("text-anchor", "middle")
+            .text("Num of Ratings");
+
+
+        //----------------------------LINES-----------------------------//
+        const lines = svg.selectAll("lines")
+            .data(counts)
+            .enter()
+            .append("g");
+
+        lines.append('path')
+            .attr("class", ids)
+            .attr("d", function(d) { 
+                return line(d.values); 
+            })
+            .style('fill', 'none')
+            .style('stroke', function(d) {return d.color});
+
+        lines.append("text")
+            .attr("class","serie_label")
+            .datum(function(d) {
+                return {
+                    id: d.id,
+                    value: d.values[d.values.length - 1]}; })
+            .attr("transform", function(d) {
+                    return "translate(" + (xScale(d.value.date) + 10)  
+                    + "," + (yScale(d.value.measurement) + 5 ) + ")"; })
+            .attr("x", 5)
+            .text(function(d) { return d.id.replace('=count', '');});
+
+
+        const lines2 = svg2.selectAll("lines")
+            .data(counts)
+            .enter()
+            .append("g");
+
+        lines2.append('path')
+            .attr("class", ids)
+            .attr("d", function(d) { 
+                return line(d.values); 
+            })
+            .style('fill', 'none')
+            .style('stroke', function(d) {return d.color});
+
+        lines2.append("text")
+            .attr("class","serie_label")
+            .datum(function(d) {
+                return {
+                    id: d.id,
+                    value: d.values[d.values.length - 1]}; })
+            .attr("transform", function(d) {
+                    return "translate(" + (xScale(d.value.date) + 10)  
+                    + "," + (yScale(d.value.measurement) + 5 ) + ")"; })
+            .attr("x", 5)
+            .text(function(d) { return d.id.replace('=count', '');});
+
+        const lines3 = svg3.selectAll("lines")
+            .data(counts)
+            .enter()
+            .append("g");
+
+        lines3.append('path')
+            .attr("class", ids)
+            .attr("d", function(d) { 
+                return line_sqrt(d.values); 
+            })
+            .style('fill', 'none')
+            .style('stroke', function(d) {return d.color});
+
+        lines3.append("text")
+            .attr("class","serie_label")
+            .datum(function(d) {
+                return {
+                    id: d.id,
+                    value: d.values[d.values.length - 1]}; })
+            .attr("transform", function(d) {
+                    return "translate(" + (xScale(d.value.date) + 10)  
+                    + "," + (yScale_sqrt(d.value.measurement) + 5 ) + ")"; })
+            .attr("x", 5)
+            .text(function(d) { return d.id.replace('=count', '');});
+
+        const lines4 = svg4.selectAll("lines")
+            .data(counts)
+            .enter()
+            .append("g");
+
+        lines4.append('path')
+            .attr("class", ids)
+            .attr("d", function(d) { 
+                return line_log(d.values); 
+            })
+            .style('fill', 'none')
+            .style('stroke', function(d) {return d.color});
+
+        lines4.append("text")
+            .attr("class","serie_label")
+            .datum(function(d) {
+                return {
+                    id: d.id,
+                    value: d.values[d.values.length - 1]}; })
+            .attr("transform", function(d) {
+                    return "translate(" + (xScale(d.value.date) + 10)  
+                    + "," + (yScale_log(d.value.measurement) + 5 ) + ")"; })
+            .attr("x", 5)
+            .text(function(d) { return d.id.replace('=count', '');});
+
+        
+        //-----------------Circles--------------------//
+
+        var catan_circles = svg2.selectAll("circle.catan")
+                 .data(catan_rank)
+                 .enter()
+                 .append('g')
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[0]);
+
+        var codenames_circles = svg2.selectAll("circle.codenames")
+                 .data(codenames_rank)
+                 .enter()
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[2]);
+
+        var terramars_circles = svg2.selectAll("circle.terramars")
+                 .data(terramars_rank)
+                 .enter()
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[3]);
+    
+        var gloomhaven_circles = svg2.selectAll("circle.gloomhaven")
+                 .data(gloom_rank)
+                 .enter()
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[4]);
+
+        var catan_circles = svg3.selectAll("circle.catan")
+                 .data(catan_rank)
+                 .enter()
+                 .append('g')
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale_sqrt(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[0]);
+
+        var codenames_circles = svg3.selectAll("circle.codenames")
+                 .data(codenames_rank)
+                 .enter()
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale_sqrt(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[2]);
+
+        var terramars_circles = svg3.selectAll("circle.terramars")
+                 .data(terramars_rank)
+                 .enter()
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale_sqrt(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[3]);
+    
+        var gloomhaven_circles = svg3.selectAll("circle.gloomhaven")
+                 .data(gloom_rank)
+                 .enter()
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale_sqrt(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[4]);
+
+        var catan_circles = svg4.selectAll("circle.catan")
+                 .data(catan_rank)
+                 .enter()
+                 .append('g')
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale_log(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[0]);
+
+        var codenames_circles = svg4.selectAll("circle.codenames")
+                 .data(codenames_rank)
+                 .enter()
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale_log(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[2]);
+
+        var terramars_circles = svg4.selectAll("circle.terramars")
+                 .data(terramars_rank)
+                 .enter()
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale_log(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[3]);
+    
+        var gloomhaven_circles = svg4.selectAll("circle.gloomhaven")
+                 .data(gloom_rank)
+                 .enter()
+                 .append("circle")
+                 .attr("cx", function(d) {
+                     return xScale(d.date)
+                 })
+                 .attr("cy", function(d) {
+                     return yScale_log(d.count)
+                 })
+                 .attr("r", 12)
+                 .style("fill", d3.schemeCategory10[4]);
+
+        
+        //------------------Circle Labels-------------//
+
+        svg2.append('g')
+            .selectAll('text')
+            .data(catan_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+        
+        svg2.selectAll('text.codenames')
+            .data(codenames_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+        
+        svg2.selectAll('text.terra')
+            .data(terramars_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+
+        svg2.selectAll('text.gloom')
+            .data(gloom_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+
+        svg3.append('g')
+            .selectAll('text')
+            .data(catan_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale_sqrt(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+        
+        svg3.selectAll('text.codenames')
+            .data(codenames_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale_sqrt(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+        
+        svg3.selectAll('text.terra')
+            .data(terramars_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale_sqrt(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+
+        svg3.selectAll('text.gloom')
+            .data(gloom_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale_sqrt(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+
+        svg4.append('g')
+            .selectAll('text')
+            .data(catan_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale_log(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+        
+        svg4.selectAll('text.codenames')
+            .data(codenames_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale_log(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+        
+        svg4.selectAll('text.terra')
+            .data(terramars_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale_log(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+
+        svg4.selectAll('text.gloom')
+            .data(gloom_rank)
+            .enter()
+            .append('text')
+            .classed('label', true)
+            .text(function(d, i) {
+                return d.measurement;
+            })
+            .attr('x', function(d) {return xScale(d.date)})
+            .attr('y', function(d) {return yScale_log(d.count)+2})
+            .attr('font-size', '11')
+            .attr("text-anchor", "middle")
+            .attr('font-family', 'Georgia')
+            .attr('fill', 'white');
+
+    //-----------Title---------------//
+
+    svg.append('text')
+        .text('Number of Ratings 2016-2020')
+        .attr('text-anchor', 'middle')
+        .attr('x', width/2)
+        .attr('y', -padding/2)
+
+    svg2.append('text')
+        .text('Number of Ratings 2016-2020 with Rankings')
+        .attr('text-anchor', 'middle')
+        .attr('x', width/2)
+        .attr('y', -padding/2)
+
+    svg3.append('text')
+        .text('Number of Ratings 2016-2020 (Square root Scale)')
+        .attr('text-anchor', 'middle')
+        .attr('x', width/2)
+        .attr('y',-padding/2)
+
+    svg4.append('text')
+        .text('Number of Ratings 2016-2020 (Log Scale)')
+        .attr('text-anchor', 'middle')
+        .attr('x', width/2)
+        .attr('y',-padding*.75)
+        
+
+    });
+    </script>
+</body>
