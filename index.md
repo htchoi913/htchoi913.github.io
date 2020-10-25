@@ -2,9 +2,9 @@
 
 ---
 
-### Category Name 1 
+### Data Visualizations
 
-[Project 1 Title](/sample_page)
+[Force Layout](/force_layout)
 <img src="images/dummy_thumbnail.jpg?raw=true"/>
 
 ---
