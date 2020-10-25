@@ -8,7 +8,7 @@
 <img src="images/dummy_thumbnail.jpg?raw=true"/>
 
 ---
-[Project 2 Title](/pdf/sample_presentation.pdf)
+[Line Charts](/line_charts)
 <img src="images/dummy_thumbnail.jpg?raw=true"/>
 
 ---
