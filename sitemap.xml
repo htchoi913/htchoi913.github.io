@@ -3,36 +3,36 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://htchoi913.github.io/post/project-2/</loc>
-    <lastmod>2017-04-10T11:00:59-04:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
     <loc>https://htchoi913.github.io/</loc>
-    <lastmod>2017-04-10T11:00:59-04:00</lastmod>
+    <lastmod>2020-10-01T10:58:08-04:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>https://htchoi913.github.io/post/project-1/</loc>
-    <lastmod>2017-04-09T10:58:08-04:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://htchoi913.github.io/tags/scene/</loc>
-    <lastmod>2017-04-09T10:58:08-04:00</lastmod>
+    <lastmod>2020-10-01T10:58:08-04:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>https://htchoi913.github.io/tags/</loc>
-    <lastmod>2017-04-09T10:58:08-04:00</lastmod>
+    <lastmod>2020-10-01T10:58:08-04:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://htchoi913.github.io/tags/viz/</loc>
+    <lastmod>2020-10-01T10:58:08-04:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://htchoi913.github.io/post/project-2/</loc>
+    <lastmod>2017-04-10T11:00:59-04:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
