@@ -1,0 +1,30 @@
+body {
+    font-family: 'Lato', Arial, Helvetica, sans-serif;
+    font-size: 16px;
+}
+
+.source, .prepaired, .update {
+    font-size: 0.625em;
+    color: grey;
+    line-height: 80%;
+}
+
+th {
+    text-align: center;
+    font-weight: bold;
+}
+
+table {
+    text-align: center;
+    padding-right: 2px;
+    margin-right: 3px;
+    width: 100%;
+}
+
+td:nth-child(6) {
+    margin-right: 8px;
+}
+
+td:nth-child(1) {
+    width: 200px;
+}
