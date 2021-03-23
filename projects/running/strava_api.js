@@ -1,6 +1,6 @@
 const auth_link = "https://www.strava.com/oauth/token"
 
-console.log('test')
+console.log('string')
 
 columnNames = ['name', 'distance', 'elapsed_time', 'total_elevation_gain']
 
@@ -56,8 +56,9 @@ function createTable(res) {
 
         var temp = {
             'Date': temp_date.toDateString(),
-            'Distance':res[i].distance,
-            'Elapsed Time':res[i].elapsed_time,
+            'Distance (mi.)':(res[i].distance/1609.34).toFixed(2),
+            'Elapsed Time':Math.floor(res[i].elapsed_time/60).toString().concat(" m ")
+                            .concat(res[i].elapsed_time % 60).concat(" s"),
             'Average Heart Rate':res[i].average_heartrate,
             'Total Elevation Gain':res[i].total_elevation_gain
         }
