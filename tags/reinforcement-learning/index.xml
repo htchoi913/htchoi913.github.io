@@ -13,7 +13,7 @@
       <pubDate>Sat, 01 May 2021 10:58:08 -0400</pubDate>
       
       <guid>https://htchoi913.github.io/post/project-1/</guid>
-      <description>Using OpenAI Gym environment, the agent was trained to land itself on the land pad.</description>
+      <description>OpenAI Gym provides the LunarLander-v2 environment which challenges users to train the lander agent to successfully solve the environment. The environment is considered solved when it achieves 200 reward points. This is typically achieved by successfully landing the agent on the landing pads. The agent is penalized points for crashing or firing the main engine. It is awarded points for coming to a successful stop on the landing pads as well as</description>
     </item>
     
   </channel>
